@@ -181,9 +181,9 @@ process ESTIMATE_FPR_TITV {
     """
     # 1. Mpileup, 2. Call variants, 3. Calculate Stats
     bcftools mpileup -Ou -f $ref $bam | \
-    bcftools call -mv -Ob -o variants.bcf
+    bcftools call -mv -Ob -o ${bam_id}.bcf
 
-    bcftools stats variants.bcf > ${bam_id}_stats.txt
+    bcftools stats ${bam_id}.bcf > ${bam_id}_stats.txt
     """
 }
 
@@ -195,13 +195,15 @@ process MULTIQC {
     path align_files
     path hs_files
     path bcf_stats
+    path config_file 
 
     output:
     path "multiqc_report.html"
+    path "multiqc_report_data"
 
     script:
     """
-    multiqc .
+    multiqc . --filename "multiqc_report.html" --config $config_file
     """
 }
 
@@ -211,6 +213,7 @@ workflow {
     bams_ch = Channel.fromPath(params.bams)
         .map { file -> tuple(file.simpleName, file) }
     bams_ch.view()
+    config_ch = Channel.value(file("${projectDir}/assets/multiqc_config.yaml"))
     ref_ch = Channel.value(file(params.ref))
     probes_bed_ch = Channel.value(file(params.probes_bed)) // New channel for probes
     targets_bed_ch = Channel.value(file(params.targets_bed)) // New channel for targets
@@ -238,12 +241,13 @@ workflow {
 
     // 5. Run Bcftools (FPR / TiTv)
     ESTIMATE_FPR_TITV(SAMTOOLS_SORT.out.bam, ref_ch)
-
+    PICARD_ALIGNMENT_METRICS.out.metrics.view()
     // 6. Aggregate results
     MULTIQC(
         PICARD_ALIGNMENT_METRICS.out.metrics.collect(),
         PICARD_HS_METRICS.out.metrics.collect(),
-        ESTIMATE_FPR_TITV.out.stats.collect()
+        ESTIMATE_FPR_TITV.out.stats.collect(),
+        config_ch
     )
 
 }

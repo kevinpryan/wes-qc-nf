@@ -1,0 +1,36 @@
+title: "WES QC Report"
+subtitle: "Metrics for QC of FFPE WES"
+
+table_columns_visible:
+    # Picard Alignment Scope
+    Picard:
+        PCT_CHIMERAS: True          # Uppercase to match your file
+        PCT_PF_READS_ALIGNED: True  # Use Aligned % (100 - Aligned = Unmapped)
+    
+    # Picard Hybrid Selection Scope
+    # Note: These usually map to lowercase keys in MultiQC internal logic, 
+    # but let's try standard identifiers first.
+    picard_hsmetrics:
+        PCT_TARGET_BASES: True      # On Target
+        FOLD_80_BASE_PENALTY: True  # Fold 80
+    
+    # Bcftools Scope
+    Bcftools:
+        tstv: True
+
+table_columns_name:
+    Picard:
+        PCT_CHIMERAS: "Chimeras (%)"
+        PCT_PF_READS_ALIGNED: "Aligned (%)"
+    picard_hsmetrics:
+        PCT_TARGET_BASES: "On Target (%)"
+        FOLD_80_BASE_PENALTY: "Fold 80 Penalty"
+    Bcftools:
+        tstv: "Ti/Tv (FPR)"
+
+# This ensures that even hidden columns are searchable/available
+show_hidden_columns: True
+
+fn_clean_exts:
+  - ".bcf"
+  - ".mapped.bam"
